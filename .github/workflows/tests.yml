@@ -64,6 +64,7 @@ jobs:
     needs: widget-tests
     container:
       image: mcr.microsoft.com/playwright:v1.56.0-jammy
+      options: --user 0
 
     steps:
       - name: Checkout
@@ -74,6 +75,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Install jq (required by flutter-action)
+        run: |
+          apt-get update
+          apt-get install -y jq
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
