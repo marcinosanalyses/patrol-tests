@@ -124,6 +124,24 @@ jobs:
       - name: Show Patrol version
         run: patrol --version
 
+      - name: Verify Patrol web_runner Playwright install and launch
+        env:
+          PATROL_WEB_BROWSER_ARGS: '["--no-sandbox","--disable-setuid-sandbox","--disable-dev-shm-usage","--disable-gpu","--use-gl=swiftshader","--enable-unsafe-swiftshader"]'
+        run: |
+          WEB_RUNNER_PATH="$(find "$PUB_CACHE/hosted/pub.dev" -maxdepth 2 -type d -path '*/patrol-*/web_runner' | head -n 1)"
+          if [[ -z "$WEB_RUNNER_PATH" ]]; then
+            echo "Could not find Patrol web_runner under $PUB_CACHE/hosted/pub.dev"
+            exit 1
+          fi
+
+          echo "Using Patrol web_runner at: $WEB_RUNNER_PATH"
+          cd "$WEB_RUNNER_PATH"
+
+          npm install
+          npx playwright install
+
+          node -e 'const { chromium } = require("playwright"); (async () => { const browser = await chromium.launch({ headless: true, args: JSON.parse(process.env.PATROL_WEB_BROWSER_ARGS || "[]") }); console.log(await browser.version()); await browser.close(); })().catch((error) => { console.error(error); process.exit(1); });'
+
       - name: Configure Chrome for Flutter web
         run: |
           CHROME_BIN="$(find /ms-playwright -type f -path '*/chrome-linux/chrome' | head -n 1)"
@@ -141,7 +159,7 @@ jobs:
       - name: Run Patrol web tests
         env:
           PATROL_ANALYTICS_ENABLED: "false"
-          PATROL_VERBOSE: "false"
+          PATROL_VERBOSE: "true"
           PATROL_PRINT_LOGS: "true"
           PATROL_WEB_TIMEOUT: "120000"
           PATROL_WEB_GLOBAL_TIMEOUT: "420000"
@@ -150,6 +168,7 @@ jobs:
           PATROL_WEB_BROWSER_ARGS: '["--no-sandbox","--disable-setuid-sandbox","--disable-dev-shm-usage","--disable-gpu","--use-gl=swiftshader","--enable-unsafe-swiftshader"]'
           PATROL_NO_OUTPUT_TIMEOUT_SECONDS: "90"
           BROWSER_LOCALE: "en-US"
+          DEBUG: "pw:browser*"
           CI: "true"
         run: |
           mkdir -p build/ci_logs
