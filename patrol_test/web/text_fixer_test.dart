@@ -7,9 +7,7 @@ void main() {
   patrol('Shows corrected text and allows copying it', ($) async {
     await createApp(
       $,
-      SequenceTextCorrectionService([
-        'This is the corrected version.',
-      ]),
+      SequenceTextCorrectionService(['This is the corrected version.']),
     );
 
     await $(AppKeys.inputField).enterText('A sample txt here');
@@ -47,9 +45,11 @@ void main() {
   patrol('Shows an error and allows copying the error log', ($) async {
     const errorMessage = 'Gemini request failed (500): test failure';
 
-    await createApp($, FailingTextCorrectionService(errorMessage));
+    await createApp($, const FailingTextCorrectionService(errorMessage));
 
-    await $(AppKeys.inputField).enterText('Sample text here, tutaj przykladowy tekst ');
+    await $(
+      AppKeys.inputField,
+    ).enterText('Sample text here, tutaj przykladowy tekst ');
     await $(AppKeys.fixButton).tap();
 
     await $(AppKeys.errorText).waitUntilVisible();

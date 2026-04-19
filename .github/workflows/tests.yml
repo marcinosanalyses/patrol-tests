@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  widget-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -29,10 +29,52 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Show tool versions
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run widget tests
+        env:
+          CI: "true"
+        run: |
+          mkdir -p build/ci_logs
+          set -o pipefail
+          flutter test |& tee build/ci_logs/flutter_test.log
+
+      - name: Upload widget test logs
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: "20"
+          name: widget-test-logs
+          path: build/ci_logs
+          if-no-files-found: warn
+
+  patrol-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: widget-tests
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.0-jammy
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
 
       - name: Show tool versions
         run: |
@@ -51,14 +93,6 @@ jobs:
 
       - name: Show Patrol version
         run: patrol --version
-
-      - name: Run widget tests
-        env:
-          CI: "true"
-        run: |
-          mkdir -p build/ci_logs
-          set -o pipefail
-          flutter test |& tee build/ci_logs/flutter_test.log
 
       - name: Run Patrol web tests
         env:

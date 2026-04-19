@@ -14,6 +14,15 @@ PATROL_HARD_TIMEOUT_MINUTES="${PATROL_HARD_TIMEOUT_MINUTES:-}"
 PATROL_NO_OUTPUT_TIMEOUT_SECONDS="${PATROL_NO_OUTPUT_TIMEOUT_SECONDS:-90}"
 PATROL_PRINT_LOGS="${PATROL_PRINT_LOGS:-true}"
 
+cleanup_web_processes() {
+  # Best effort cleanup for orphan Playwright/Chromium processes from previous runs.
+  # Restrict to common Playwright cache/process names to avoid unrelated process kills.
+  pkill -f 'ms-playwright/.*/chrome-linux64/chrome' >/dev/null 2>&1 || true
+  pkill -f 'ms-playwright/.*/chrome-headless-shell' >/dev/null 2>&1 || true
+  pkill -f 'playwright.*chromium' >/dev/null 2>&1 || true
+  pkill -f 'patrol-.*/web_runner' >/dev/null 2>&1 || true
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --open)
@@ -92,10 +101,23 @@ if [[ -n "${PATROL_HARD_TIMEOUT_MINUTES}" ]]; then
 fi
 
 run_patrol_command() {
+  if [[ "${CI:-false}" == "true" ]]; then
+    cleanup_web_processes
+  fi
+
+  if [[ "${CI:-false}" == "true" ]]; then
+    trap cleanup_web_processes EXIT
+  fi
+
   LANG="${BROWSER_LOCALE}" \
   LANGUAGE="${BROWSER_LOCALE}" \
   PATROL_ANALYTICS_ENABLED=false \
   "${PATROL_CMD}" "${PATROL_ARGS[@]}"
+
+  if [[ "${CI:-false}" == "true" ]]; then
+    trap - EXIT
+    cleanup_web_processes
+  fi
 }
 
 run_with_no_output_watchdog() {
