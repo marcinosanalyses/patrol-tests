@@ -10,6 +10,7 @@ WEB_HEADLESS=true
 RUN_WIDGET_TESTS=true
 PATROL_VERBOSE="${PATROL_VERBOSE:-false}"
 BROWSER_LOCALE="${BROWSER_LOCALE:-en-US}"
+PATROL_HARD_TIMEOUT_MINUTES="${PATROL_HARD_TIMEOUT_MINUTES:-}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -25,13 +26,17 @@ while [[ $# -gt 0 ]]; do
       RUN_WIDGET_TESTS=false
       shift
       ;;
+    --fail-fast-minutes)
+      PATROL_HARD_TIMEOUT_MINUTES="$2"
+      shift 2
+      ;;
     --target)
       TARGET="$2"
       shift 2
       ;;
     *)
       echo "Unknown argument: $1"
-      echo "Usage: $0 [--open] [--headed] [--patrol-only] [--target <patrol_test path>]"
+      echo "Usage: $0 [--open] [--headed] [--patrol-only] [--fail-fast-minutes <n>] [--target <patrol_test path>]"
       exit 1
       ;;
   esac
@@ -68,9 +73,28 @@ if [[ "${PATROL_VERBOSE}" == "true" ]]; then
   PATROL_ARGS=(--verbose "${PATROL_ARGS[@]}")
 fi
 
-LANG="${BROWSER_LOCALE}" \
-LANGUAGE="${BROWSER_LOCALE}" \
-PATROL_ANALYTICS_ENABLED=false "${PATROL_CMD}" "${PATROL_ARGS[@]}"
+TIMEOUT_BIN=""
+if [[ -n "${PATROL_HARD_TIMEOUT_MINUTES}" ]]; then
+  if command -v timeout >/dev/null 2>&1; then
+    TIMEOUT_BIN="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_BIN="gtimeout"
+  else
+    echo "Warning: fail-fast requested (${PATROL_HARD_TIMEOUT_MINUTES}m) but neither timeout nor gtimeout is available."
+  fi
+fi
+
+if [[ -n "${TIMEOUT_BIN}" ]]; then
+  "${TIMEOUT_BIN}" --signal=SIGINT --kill-after=30s "${PATROL_HARD_TIMEOUT_MINUTES}m" env \
+    LANG="${BROWSER_LOCALE}" \
+    LANGUAGE="${BROWSER_LOCALE}" \
+    PATROL_ANALYTICS_ENABLED=false \
+    "${PATROL_CMD}" "${PATROL_ARGS[@]}"
+else
+  LANG="${BROWSER_LOCALE}" \
+  LANGUAGE="${BROWSER_LOCALE}" \
+  PATROL_ANALYTICS_ENABLED=false "${PATROL_CMD}" "${PATROL_ARGS[@]}"
+fi
 
 echo "==> Patrol report: ${REPORT_DIR}/index.html"
 echo "==> Patrol json:   ${REPORT_DIR}/results.json"

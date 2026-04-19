@@ -6,7 +6,7 @@ import 'package:text_fixer_app/text_correction_service.dart';
 export 'package:flutter_test/flutter_test.dart';
 export 'package:patrol/patrol.dart';
 
-final _patrolTesterConfig = PatrolTesterConfig(printLogs: true);
+final _patrolTesterConfig = PatrolTesterConfig(printLogs: false);
 
 class _NoopClipboardService implements ClipboardService {
   const _NoopClipboardService();

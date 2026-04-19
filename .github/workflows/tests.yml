@@ -58,20 +58,30 @@ jobs:
       - name: Run widget tests
         env:
           CI: "true"
-        run: flutter test
+        run: |
+          mkdir -p build/ci_logs
+          set -o pipefail
+          flutter test |& tee build/ci_logs/flutter_test.log
 
       - name: Run Patrol web tests
         env:
           PATROL_ANALYTICS_ENABLED: "false"
-          PATROL_VERBOSE: "true"
+          PATROL_VERBOSE: "false"
+          PATROL_WEB_TIMEOUT: "120000"
+          PATROL_WEB_GLOBAL_TIMEOUT: "420000"
+          PATROL_WEB_WORKERS: "1"
+          PATROL_WEB_VIDEO: "retain-on-failure"
+          PATROL_HARD_TIMEOUT_MINUTES: "8"
           BROWSER_LOCALE: "en-US"
           CI: "true"
         run: |
+          mkdir -p build/ci_logs
+          set -o pipefail
           echo "==> Locale environment"
           echo "LANG=${LANG:-unset}"
           echo "LC_ALL=${LC_ALL:-unset}"
           echo "BROWSER_LOCALE=${BROWSER_LOCALE:-unset}"
-          ./scripts/run_tests_with_report.sh --patrol-only --target patrol_test/web/text_fixer_test.dart
+          ./scripts/run_tests_with_report.sh --patrol-only --target patrol_test/web/text_fixer_test.dart |& tee build/ci_logs/patrol_web.log
 
       - name: Debug Patrol build outputs
         if: always()
@@ -94,4 +104,15 @@ jobs:
             build/patrol_web_report_diag
             build/patrol_web_results_core
             build/patrol_web_results_diag
+          if-no-files-found: warn
+
+      - name: Upload CI debug logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-debug-logs
+          path: |
+            build/ci_logs
+            build/patrol_web_report/results.json
+            build/patrol_web_results
           if-no-files-found: warn
