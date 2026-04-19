@@ -1,4 +1,4 @@
-name: test web
+name: test patrol-web
 
 on:
   workflow_dispatch:
