@@ -4,22 +4,27 @@ import 'package:text_fixer_app/text_correction_service.dart';
 import '../common.dart';
 
 void main() {
-  patrol('Shows corrected text and allows copying it', ($) async {
-    await createApp(
-      $,
-      SequenceTextCorrectionService(['This is the corrected version.']),
-    );
+  patrol(
+    'Check if adding text is possible and corrected version is received and can be copied',
+    ($) async {
+      await createApp(
+        $,
+        SequenceTextCorrectionService(['This is the corrected version.']),
+      );
 
-    await $(AppKeys.inputField).enterText('A sample txt here');
-    await $(AppKeys.fixButton).tap();
+      await $(AppKeys.inputField).enterText('A sample txt here');
+      await $(AppKeys.fixButton).tap();
 
-    await $(AppKeys.outputText).waitUntilVisible();
-    expect($('This is the corrected version.'), findsOneWidget);
-    await $(AppKeys.copyButton).tap();
-    await $('Corrected text copied.').waitUntilVisible();
-  });
+      await $(AppKeys.outputText).waitUntilVisible();
+      expect($('This is the corrected version.'), findsOneWidget);
+      await $(AppKeys.copyButton).tap();
+      await $('Corrected text copied.').waitUntilVisible();
+    },
+  );
 
-  patrol('Retries correction and allows copying the retried result', ($) async {
+  patrol('Check if retry is possible and the retried response can be copied', (
+    $,
+  ) async {
     await createApp(
       $,
       SequenceTextCorrectionService([
@@ -42,10 +47,10 @@ void main() {
     await $('Corrected text copied.').waitUntilVisible();
   });
 
-  patrol('Shows an error and allows copying the error log', ($) async {
+  patrol('Check if error log can be copied', ($) async {
     const errorMessage = 'Gemini request failed (500): test failure';
 
-    await createApp($, const FailingTextCorrectionService(errorMessage));
+    await createApp($, FailingTextCorrectionService(errorMessage));
 
     await $(
       AppKeys.inputField,

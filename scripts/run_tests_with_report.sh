@@ -109,8 +109,7 @@ run_patrol_command() {
     trap cleanup_web_processes EXIT
   fi
 
-  LANG="${BROWSER_LOCALE}" \
-  LANGUAGE="${BROWSER_LOCALE}" \
+  PATROL_WEB_LOCALE="${BROWSER_LOCALE//_/-}" \
   PATROL_ANALYTICS_ENABLED=false \
   "${PATROL_CMD}" "${PATROL_ARGS[@]}"
 
