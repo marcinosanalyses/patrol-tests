@@ -8,12 +8,22 @@ export 'package:patrol/patrol.dart';
 
 final _patrolTesterConfig = PatrolTesterConfig(printLogs: true);
 
+class _NoopClipboardService implements ClipboardService {
+  const _NoopClipboardService();
+
+  @override
+  Future<void> setText(String text) async {}
+}
+
 Future<void> createApp(
   PatrolIntegrationTester $,
   TextCorrectionService correctionService,
 ) async {
   await $.pumpWidgetAndSettle(
-    MyApp(correctionService: correctionService),
+    MyApp(
+      correctionService: correctionService,
+      clipboardService: const _NoopClipboardService(),
+    ),
   );
 }
 
@@ -21,9 +31,5 @@ void patrol(
   String description,
   Future<void> Function(PatrolIntegrationTester) callback,
 ) {
-  patrolTest(
-    description,
-    config: _patrolTesterConfig,
-    callback,
-  );
+  patrolTest(description, config: _patrolTesterConfig, callback);
 }

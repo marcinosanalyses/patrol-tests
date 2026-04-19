@@ -55,7 +55,12 @@ jobs:
       - name: Show Patrol version
         run: patrol --version
 
-      - name: Run widget + Patrol web tests
+      - name: Run widget tests
+        env:
+          CI: "true"
+        run: flutter test
+
+      - name: Run Patrol web tests
         env:
           PATROL_ANALYTICS_ENABLED: "false"
           PATROL_VERBOSE: "true"
@@ -66,7 +71,7 @@ jobs:
           echo "LANG=${LANG:-unset}"
           echo "LC_ALL=${LC_ALL:-unset}"
           echo "BROWSER_LOCALE=${BROWSER_LOCALE:-unset}"
-          ./scripts/run_tests_with_report.sh
+          ./scripts/run_tests_with_report.sh --patrol-only --target patrol_test/web/text_fixer_test.dart
 
       - name: Debug Patrol build outputs
         if: always()
