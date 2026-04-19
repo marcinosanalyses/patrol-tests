@@ -67,11 +67,13 @@ jobs:
         env:
           PATROL_ANALYTICS_ENABLED: "false"
           PATROL_VERBOSE: "false"
+          PATROL_PRINT_LOGS: "true"
           PATROL_WEB_TIMEOUT: "120000"
           PATROL_WEB_GLOBAL_TIMEOUT: "420000"
           PATROL_WEB_WORKERS: "1"
           PATROL_WEB_VIDEO: "retain-on-failure"
-          PATROL_HARD_TIMEOUT_MINUTES: "8"
+          PATROL_WEB_BROWSER_ARGS: '["--disable-dev-shm-usage","--disable-gpu","--use-gl=swiftshader","--enable-unsafe-swiftshader"]'
+          PATROL_NO_OUTPUT_TIMEOUT_SECONDS: "60"
           BROWSER_LOCALE: "en-US"
           CI: "true"
         run: |

@@ -4,7 +4,7 @@
       "command": "./.vscode/run-patrol",
       "env": {
         "PROJECT_ROOT": ".",
-        "PATROL_FLAGS": "",
+        "PATROL_FLAGS": "--device chrome",
         "SHOW_TERMINAL": "false"
       }
     }
