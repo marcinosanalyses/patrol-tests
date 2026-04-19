@@ -121,6 +121,20 @@ jobs:
       - name: Show Patrol version
         run: patrol --version
 
+      - name: Configure Chrome for Flutter web
+        run: |
+          CHROME_BIN="$(find /ms-playwright -type f -path '*/chrome-linux/chrome' | head -n 1)"
+          if [[ -z "${CHROME_BIN}" ]]; then
+            echo "Could not find Playwright Chromium binary under /ms-playwright"
+            exit 1
+          fi
+
+          ln -sf "${CHROME_BIN}" /usr/local/bin/google-chrome
+          chmod +x /usr/local/bin/google-chrome
+
+          flutter config --enable-web
+          flutter devices
+
       - name: Run Patrol web tests
         env:
           PATROL_ANALYTICS_ENABLED: "false"
