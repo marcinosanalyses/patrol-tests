@@ -8,6 +8,7 @@ TARGET="patrol_test/web/text_fixer_test.dart"
 OPEN_REPORT=false
 WEB_HEADLESS=true
 PATROL_VERBOSE="${PATROL_VERBOSE:-false}"
+BROWSER_LOCALE="${BROWSER_LOCALE:-en-US}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -50,6 +51,8 @@ if [[ "${PATROL_VERBOSE}" == "true" ]]; then
   PATROL_ARGS+=(--verbose)
 fi
 
+LANG="${BROWSER_LOCALE}" \
+LANGUAGE="${BROWSER_LOCALE}" \
 PATROL_ANALYTICS_ENABLED=false "${PATROL_CMD}" test \
   "${PATROL_ARGS[@]}" \
   --device chrome \

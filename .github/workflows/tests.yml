@@ -59,8 +59,14 @@ jobs:
         env:
           PATROL_ANALYTICS_ENABLED: "false"
           PATROL_VERBOSE: "true"
+          BROWSER_LOCALE: "en-US"
           CI: "true"
-        run: ./scripts/run_tests_with_report.sh
+        run: |
+          echo "==> Locale environment"
+          echo "LANG=${LANG:-unset}"
+          echo "LC_ALL=${LC_ALL:-unset}"
+          echo "BROWSER_LOCALE=${BROWSER_LOCALE:-unset}"
+          ./scripts/run_tests_with_report.sh
 
       - name: Debug Patrol build outputs
         if: always()
