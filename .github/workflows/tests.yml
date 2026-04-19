@@ -49,10 +49,28 @@ jobs:
           dart pub global activate patrol_cli
           echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
 
+      - name: Install Playwright Chromium and Linux deps
+        run: npx --yes playwright@latest install --with-deps chromium
+
+      - name: Show Patrol version
+        run: patrol --version
+
       - name: Run widget + Patrol web tests
         env:
           PATROL_ANALYTICS_ENABLED: "false"
+          PATROL_VERBOSE: "true"
+          CI: "true"
         run: ./scripts/run_tests_with_report.sh
+
+      - name: Debug Patrol build outputs
+        if: always()
+        run: |
+          echo "==> Build directories"
+          ls -la build || true
+          echo "==> Patrol-related directories"
+          find build -maxdepth 2 -type d -name 'patrol*' -print || true
+          echo "==> Patrol-related files"
+          find build -maxdepth 3 -type f \( -name '*.json' -o -name '*.html' -o -name '*.xml' -o -name '*.txt' \) | grep patrol || true
 
       - name: Upload Patrol web report
         if: always()
@@ -62,4 +80,7 @@ jobs:
           path: |
             build/patrol_web_report
             build/patrol_web_results
+            build/patrol_web_report_diag
+            build/patrol_web_results_core
+            build/patrol_web_results_diag
           if-no-files-found: warn

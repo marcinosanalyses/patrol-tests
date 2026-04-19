@@ -7,6 +7,7 @@ RESULTS_DIR="${ROOT_DIR}/build/patrol_web_results"
 TARGET="patrol_test/web/text_fixer_test.dart"
 OPEN_REPORT=false
 WEB_HEADLESS=true
+PATROL_VERBOSE="${PATROL_VERBOSE:-false}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -44,7 +45,13 @@ cd "${ROOT_DIR}"
 flutter test
 
 echo "==> Running Patrol web tests with report output"
+PATROL_ARGS=()
+if [[ "${PATROL_VERBOSE}" == "true" ]]; then
+  PATROL_ARGS+=(--verbose)
+fi
+
 PATROL_ANALYTICS_ENABLED=false "${PATROL_CMD}" test \
+  "${PATROL_ARGS[@]}" \
   --device chrome \
   --target "${TARGET}" \
   --web-report-dir "${REPORT_DIR}" \
