@@ -68,6 +68,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: widget-tests
+    defaults:
+      run:
+        shell: bash
     container:
       image: mcr.microsoft.com/playwright:v1.56.0-jammy
       options: --user 0
