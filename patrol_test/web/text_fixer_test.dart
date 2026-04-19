@@ -4,7 +4,10 @@ import 'package:text_fixer_app/text_correction_service.dart';
 import '../common.dart';
 
 void main() {
-  const runErrorCase = bool.fromEnvironment('RUN_ERROR_CASE', defaultValue: false);
+  const runErrorCase = bool.fromEnvironment(
+    'RUN_ERROR_CASE',
+    defaultValue: false,
+  );
 
   patrol(
     'Check if adding text is possible and corrected version is received and can be copied',
