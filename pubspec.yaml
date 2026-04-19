@@ -49,6 +49,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   patrol: ^4.5.0
+  patrol_mcp: ^0.1.3
 
 patrol:
   test_directory: patrol_test

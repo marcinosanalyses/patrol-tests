@@ -5,9 +5,7 @@ import 'text_correction_service.dart';
 
 void main() {
   runApp(
-    MyApp(
-      correctionService: GeminiTextCorrectionService.fromEnvironment(),
-    ),
+    MyApp(correctionService: GeminiTextCorrectionService.fromEnvironment()),
   );
 }
 
@@ -22,13 +20,28 @@ class AppKeys {
   static const loadingIndicator = Key('loading-indicator');
 }
 
+abstract class ClipboardService {
+  Future<void> setText(String text);
+}
+
+class SystemClipboardService implements ClipboardService {
+  const SystemClipboardService();
+
+  @override
+  Future<void> setText(String text) {
+    return Clipboard.setData(ClipboardData(text: text));
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({
     super.key,
     required this.correctionService,
+    this.clipboardService = const SystemClipboardService(),
   });
 
   final TextCorrectionService correctionService;
+  final ClipboardService clipboardService;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +50,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
       ),
-      home: TextFixerScreen(correctionService: correctionService),
+      home: TextFixerScreen(
+        correctionService: correctionService,
+        clipboardService: clipboardService,
+      ),
     );
   }
 }
@@ -46,9 +62,11 @@ class TextFixerScreen extends StatefulWidget {
   const TextFixerScreen({
     super.key,
     required this.correctionService,
+    required this.clipboardService,
   });
 
   final TextCorrectionService correctionService;
+  final ClipboardService clipboardService;
 
   @override
   State<TextFixerScreen> createState() => _TextFixerScreenState();
@@ -123,14 +141,14 @@ class _TextFixerScreenState extends State<TextFixerScreen> {
       return;
     }
 
-    await Clipboard.setData(ClipboardData(text: text));
+    await widget.clipboardService.setText(text);
     if (!mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(successMessage)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(successMessage)));
   }
 
   Future<void> _copyResult() async {
@@ -203,7 +221,9 @@ class _TextFixerScreenState extends State<TextFixerScreen> {
               if (_isLoading) ...[
                 const SizedBox(height: 16),
                 const Center(
-                  child: CircularProgressIndicator(key: AppKeys.loadingIndicator),
+                  child: CircularProgressIndicator(
+                    key: AppKeys.loadingIndicator,
+                  ),
                 ),
               ],
               if (_error != null) ...[
@@ -219,7 +239,9 @@ class _TextFixerScreenState extends State<TextFixerScreen> {
                           _error!,
                           key: AppKeys.errorText,
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onErrorContainer,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onErrorContainer,
                           ),
                         ),
                         const SizedBox(height: 8),

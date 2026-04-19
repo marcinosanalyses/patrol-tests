@@ -40,6 +40,7 @@ Useful flags:
 
 - `--headed` run Chrome in headed mode.
 - `--open` open HTML report after run (macOS).
+- `--patrol-only` skip `flutter test` and run only Patrol web.
 - `--target patrol_test/web/<file>.dart` run a specific Patrol test file.
 
 Examples:
@@ -47,6 +48,7 @@ Examples:
 ```bash
 ./scripts/run_tests_with_report.sh --open
 ./scripts/run_tests_with_report.sh --headed --open
+./scripts/run_tests_with_report.sh --patrol-only --target patrol_test/web/text_fixer_test.dart
 ```
 
 Report output:

@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "patrol": {
+      "command": "./.vscode/run-patrol",
+      "env": {
+        "PROJECT_ROOT": ".",
+        "PATROL_FLAGS": "--device chrome",
+        "SHOW_TERMINAL": "false"
+      }
+    }
+  }
+}
