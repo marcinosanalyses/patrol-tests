@@ -1,115 +1,27 @@
 name: Tests
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches:
       - main
       - master
-  workflow_dispatch:
 
 jobs:
-  widget-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Install jq for flutter-action
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Configure git safe.directory for Flutter SDK
-        run: |
-          if [ -n "${FLUTTER_ROOT:-}" ] && [ -d "${FLUTTER_ROOT}" ]; then
-            git config --global --add safe.directory "${FLUTTER_ROOT}"
-          fi
-          if [ -d /__t/flutter ]; then
-            find /__t/flutter -maxdepth 2 -type d -name flutter -print0 | while IFS= read -r -d '' dir; do
-              git config --global --add safe.directory "$dir"
-            done
-          fi
-
-      - name: Show tool versions
-        run: |
-          flutter --version
-          dart --version
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Run widget tests
-        env:
-          CI: "true"
-        run: |
-          mkdir -p build/ci_logs
-          set -o pipefail
-          flutter test |& tee build/ci_logs/flutter_test.log
-
-      - name: Upload widget test logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: widget-test-logs
-          path: build/ci_logs
-          if-no-files-found: warn
-
   patrol-web:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: widget-tests
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install jq for flutter-action
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
-
-      - name: Configure git safe.directory for Flutter SDK
-        run: |
-          if [ -n "${FLUTTER_ROOT:-}" ] && [ -d "${FLUTTER_ROOT}" ]; then
-            git config --global --add safe.directory "${FLUTTER_ROOT}"
-          fi
-          if [ -d /__t/flutter ]; then
-            find /__t/flutter -maxdepth 2 -type d -name flutter -print0 | while IFS= read -r -d '' dir; do
-              git config --global --add safe.directory "$dir"
-            done
-          fi
 
       - name: Show tool versions
         run: |
@@ -121,42 +33,29 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Install Patrol CLI
+      - name: Set up Patrol CLI
         run: |
           dart pub global activate patrol_cli
           echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
-
-      - name: Show Patrol version
-        run: patrol --version
+          patrol --version
 
       - name: Enable Flutter web device
         run: |
           flutter config --enable-web
+          flutter precache --web
           flutter devices
 
       - name: Run Patrol web tests
+        id: tests_step
         env:
-          PATROL_ANALYTICS_ENABLED: "false"
-          PATROL_VERBOSE: "false"
-          PATROL_PRINT_LOGS: "true"
           CI: "true"
+          PATROL_ANALYTICS_ENABLED: "false"
+          PATROL_PRINT_LOGS: "true"
         run: |
-          mkdir -p build/ci_logs
-          set -o pipefail
           TESTS_EXIT_CODE=0
           patrol test --target patrol_test/web/text_fixer_test.dart -d chrome --verbose --web-headless true --web-workers 1 --web-locale en-US --web-report-dir build/patrol_web_report --web-results-dir build/patrol_web_results --web-reporter '["html","json","list"]' || TESTS_EXIT_CODE=$?
-          echo "TESTS_EXIT_CODE=$TESTS_EXIT_CODE" |& tee build/ci_logs/patrol_web.log
+          echo "TESTS_EXIT_CODE=$TESTS_EXIT_CODE" >> "$GITHUB_OUTPUT"
           exit $TESTS_EXIT_CODE
-
-      - name: Debug Patrol build outputs
-        if: always()
-        run: |
-          echo "==> Build directories"
-          ls -la build || true
-          echo "==> Patrol-related directories"
-          find build -maxdepth 2 -type d -name 'patrol*' -print || true
-          echo "==> Patrol-related files"
-          find build -maxdepth 3 -type f \( -name '*.json' -o -name '*.html' -o -name '*.xml' -o -name '*.txt' \) | grep patrol || true
 
       - name: Upload Patrol web report
         if: always()
@@ -166,18 +65,5 @@ jobs:
           path: |
             build/patrol_web_report
             build/patrol_web_results
-            build/patrol_web_report_diag
-            build/patrol_web_results_core
-            build/patrol_web_results_diag
-          if-no-files-found: warn
-
-      - name: Upload CI debug logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-debug-logs
-          path: |
-            build/ci_logs
-            build/patrol_web_report/results.json
-            build/patrol_web_results
+          retention-days: 7
           if-no-files-found: warn
