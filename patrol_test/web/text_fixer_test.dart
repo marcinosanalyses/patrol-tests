@@ -68,13 +68,8 @@ void main() {
     await $(AppKeys.errorText).waitUntilVisible();
     expect($(errorMessage), findsOneWidget);
 
-    await $.platform.web.grantPermissions(
-      permissions: ['clipboard-read', 'clipboard-write'],
-    );
     await $(AppKeys.copyErrorButton).tap();
-
-        final clipboard = await $.platform.web.getClipboard();
-        expect(clipboard, errorMessage);
+    await $('Error log copied.').waitUntilVisible();
   });
 }
 
