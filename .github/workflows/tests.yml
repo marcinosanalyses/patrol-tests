@@ -29,6 +29,17 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Configure git safe.directory for Flutter SDK
+        run: |
+          if [ -n "${FLUTTER_ROOT:-}" ] && [ -d "${FLUTTER_ROOT}" ]; then
+            git config --global --add safe.directory "${FLUTTER_ROOT}"
+          fi
+          if [ -d /__t/flutter ]; then
+            find /__t/flutter -maxdepth 2 -type d -name flutter -print0 | while IFS= read -r -d '' dir; do
+              git config --global --add safe.directory "$dir"
+            done
+          fi
+
       - name: Show tool versions
         run: |
           flutter --version
