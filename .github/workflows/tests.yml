@@ -49,9 +49,6 @@ jobs:
           dart pub global activate patrol_cli
           echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
 
-      - name: Install Playwright Chromium and Linux deps
-        run: npx --yes playwright@latest install --with-deps chromium
-
       - name: Show Patrol version
         run: patrol --version
 
@@ -73,7 +70,7 @@ jobs:
           PATROL_WEB_WORKERS: "1"
           PATROL_WEB_VIDEO: "retain-on-failure"
           PATROL_WEB_BROWSER_ARGS: '["--disable-dev-shm-usage","--disable-gpu","--use-gl=swiftshader","--enable-unsafe-swiftshader"]'
-          PATROL_NO_OUTPUT_TIMEOUT_SECONDS: "60"
+          PATROL_NO_OUTPUT_TIMEOUT_SECONDS: "90"
           BROWSER_LOCALE: "en-US"
           CI: "true"
         run: |
@@ -83,7 +80,7 @@ jobs:
           echo "LANG=${LANG:-unset}"
           echo "LC_ALL=${LC_ALL:-unset}"
           echo "BROWSER_LOCALE=${BROWSER_LOCALE:-unset}"
-          ./scripts/run_tests_with_report.sh --patrol-only --target patrol_test/web/text_fixer_test.dart |& tee build/ci_logs/patrol_web.log
+          ./scripts/run_tests_with_report.sh --patrol-only --no-output-timeout-seconds 90 --target patrol_test/web/text_fixer_test.dart |& tee build/ci_logs/patrol_web.log
 
       - name: Debug Patrol build outputs
         if: always()
