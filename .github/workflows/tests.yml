@@ -50,6 +50,8 @@ jobs:
         env:
           CI: true
           PATROL_ANALYTICS_ENABLED: false
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: |
           TESTS_EXIT_CODE=0
           # Do not use tags here, tags do not work with patrol web tests
