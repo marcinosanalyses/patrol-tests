@@ -1,69 +1,65 @@
-name: Tests
+name: test web
 
 on:
   workflow_dispatch:
-  pull_request:
-  push:
-    branches:
-      - main
-      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  patrol-web:
+  run_tests:
+    name: Flutter ${{ matrix.flutter-version }} on Web
     runs-on: ubuntu-latest
     timeout-minutes: 30
+  
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter-version: ['3.38.x']
+        flutter-channel: ['stable']
+
+    defaults:
+      run:
+        working-directory: dev/e2e_app
 
     steps:
-      - name: Checkout
+      - name: Clone repository
         uses: actions/checkout@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
-          cache: true
+          flutter-version: ${{ matrix.flutter-version }}
+          channel: ${{ matrix.flutter-channel }}
 
-      - name: Show tool versions
+      - name: Preload Flutter artifacts
+        run: flutter precache --web
+
+      - name: Set up Melos and activate workspace
+        working-directory: .
         run: |
-          flutter --version
-          dart --version
-          node --version
-          npm --version
-
-      - name: Install dependencies
-        run: flutter pub get
+          dart pub global activate melos
+          melos bootstrap
 
       - name: Set up Patrol CLI
-        run: |
-          dart pub global activate patrol_cli
-          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
-          patrol --version
+        working-directory: packages/patrol_cli
+        run: dart pub global activate --source path . && patrol
 
-      - name: Enable Flutter web device
-        run: |
-          flutter config --enable-web
-          flutter precache --web
-          flutter devices
-
-      - name: Run Patrol web tests
+      - name: Run web tests
         id: tests_step
-        env:
-          CI: "true"
-          PATROL_ANALYTICS_ENABLED: "false"
-          PATROL_PRINT_LOGS: "true"
         run: |
           TESTS_EXIT_CODE=0
-          patrol test --target patrol_test/web/text_fixer_test.dart -d chrome --verbose --web-headless true --web-workers 1 --web-locale en-US --web-report-dir build/patrol_web_report --web-results-dir build/patrol_web_results --web-reporter '["html","json","list"]' || TESTS_EXIT_CODE=$?
+          # Do not use tags here, tags do not work with patrol web tests
+          patrol test --target patrol_test/web/text_fixer_test.dart -d chrome --verbose --web-headless true --web-workers 1 --web-locale en-US || TESTS_EXIT_CODE=$?
+
           echo "TESTS_EXIT_CODE=$TESTS_EXIT_CODE" >> "$GITHUB_OUTPUT"
           exit $TESTS_EXIT_CODE
 
-      - name: Upload Patrol web report
+      - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: patrol-web-report
-          path: |
-            build/patrol_web_report
-            build/patrol_web_results
+          name: playwright-report-${{ matrix.flutter-version }}
+          path: dev/e2e_app/playwright-report/
           retention-days: 7
-          if-no-files-found: warn
