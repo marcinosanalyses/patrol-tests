@@ -71,10 +71,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install jq (required by flutter-action)
+      - name: Install container prerequisites for flutter-action
         run: |
           apt-get update
-          apt-get install -y jq
+          apt-get install -y jq xz-utils
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
